@@ -1,5 +1,6 @@
 package com.esantiago.pagination;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -14,11 +15,11 @@ import com.esantiago.pagination.adapter.AdapterItem;
 import com.esantiago.pagination.entity.Item;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoadMoreListener
                 ,SwipeRefreshLayout.OnRefreshListener{
 
-    //EndlessRecyclerView
 
     private AdapterItem mAdapter;
     private ArrayList<Item> itemList;
@@ -29,16 +30,24 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        itemList = new ArrayList<Item>();
-        swipeRefresh=(SwipeRefreshLayout)findViewById(R.id.swipeRefresh);
-        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.rvList);
+        itemList = new ArrayList<>();
+        swipeRefresh=findViewById(R.id.swipeRefresh);
+        RecyclerView mRecyclerView =  findViewById(R.id.rvList);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new AdapterItem(this);
-        mAdapter.setLinearLayoutManager(mLayoutManager);
-        mAdapter.setRecyclerView(mRecyclerView);
         mRecyclerView.setAdapter(mAdapter);
         swipeRefresh.setOnRefreshListener(this);
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager llManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (llManager.findLastCompletelyVisibleItemPosition() == (mAdapter.getItemCount() - 4)) {
+                    mAdapter.showLoading();
+                }
+            }
+        });
 
 
     }
@@ -65,22 +74,46 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
 
     @Override
     public void onLoadMore() {
-        Log.d("MainActivity_","onLoadMore");
-        mAdapter.setProgressMore(true);
-        new Handler().postDelayed(new Runnable() {
+        new AsyncTask<Void,Void,List<Item>>(){
             @Override
-            public void run() {
-                itemList.clear();
-                mAdapter.setProgressMore(false);
-                int start = mAdapter.getItemCount();
-                int end = start + 15;
-                for (int i = start + 1; i <= end; i++) {
-                    itemList.add(new Item("Item " + i));
-                }
-                mAdapter.addItemMore(itemList);
-                mAdapter.setMoreLoading(false);
+            protected void onPreExecute() {
+                super.onPreExecute();
+                mAdapter.showLoading();
             }
-        },2000);
+
+            @Override
+            protected List<Item> doInBackground(Void... voids) {
+                /**
+                 *    Delete everything what is below // and place your code logic
+                 */
+                ///////////////////////////////////////////
+                int start = mAdapter.getItemCount() - 1;
+                int end = start + 15;
+                List<Item> list = new ArrayList<>();
+                if (end < 200) {
+                    for (int i = start + 1; i <= end; i++) {
+                        list.add(new Item("Item " + i));
+                    }
+                }
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                /////////////////////////////////////////////////
+                return list;
+
+            }
+
+            @Override
+            protected void onPostExecute(List<Item> items) {
+                super.onPostExecute(items);
+                mAdapter.dismissLoading();
+                mAdapter.addItemMore(items);
+                mAdapter.setMore(true);
+            }
+        }.execute();
+
     }
 
     private void loadData() {

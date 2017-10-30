@@ -1,9 +1,7 @@
 package com.esantiago.pagination.adapter;
 
 import android.os.Handler;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +21,8 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
     private ArrayList<Item> itemList;
 
     private OnLoadMoreListener onLoadMoreListener;
-    private LinearLayoutManager mLinearLayoutManager;
 
-    private boolean isMoreLoading = false;
-    private int visibleThreshold = 1;
-    int firstVisibleItem, visibleItemCount, totalItemCount;
+    private boolean isMoreLoading = true;
 
     public interface OnLoadMoreListener{
         void onLoadMore();
@@ -36,28 +31,6 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
     public AdapterItem(OnLoadMoreListener onLoadMoreListener) {
         this.onLoadMoreListener=onLoadMoreListener;
         itemList =new ArrayList<>();
-    }
-
-    public void setLinearLayoutManager(LinearLayoutManager linearLayoutManager){
-        this.mLinearLayoutManager=linearLayoutManager;
-    }
-
-    public void setRecyclerView(RecyclerView mView){
-        mView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                visibleItemCount = recyclerView.getChildCount();
-                totalItemCount = mLinearLayoutManager.getItemCount();
-                firstVisibleItem = mLinearLayoutManager.findFirstVisibleItemPosition();
-                if (!isMoreLoading && (totalItemCount - visibleItemCount)<= (firstVisibleItem + visibleThreshold)) {
-                    if (onLoadMoreListener != null) {
-                        onLoadMoreListener.onLoadMore();
-                    }
-                    isMoreLoading = true;
-                }
-            }
-        });
     }
 
     @Override
@@ -72,7 +45,31 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
         } else {
             return new ProgressViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_progress, parent, false));
         }
+    }
 
+    public void showLoading() {
+        if (isMoreLoading && itemList != null && onLoadMoreListener != null) {
+            isMoreLoading = false;
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    itemList.add(null);
+                    notifyItemInserted(itemList.size() - 1);
+                    onLoadMoreListener.onLoadMore();
+                }
+            });
+        }
+    }
+
+    public void setMore(boolean isMore) {
+        this.isMoreLoading = isMore;
+    }
+
+    public void dismissLoading() {
+        if (itemList != null && itemList.size() > 0) {
+            itemList.remove(itemList.size() - 1);
+            notifyItemRemoved(itemList.size());
+        }
     }
 
     public void addAll(List<Item> lst){
@@ -82,8 +79,14 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
     }
 
     public void addItemMore(List<Item> lst){
+        int sizeInit = itemList.size();
         itemList.addAll(lst);
-        notifyItemRangeChanged(0,itemList.size());
+        notifyItemRangeChanged(sizeInit, itemList.size());
+    }
+
+    public void clear(){
+        itemList.clear();
+        notifyDataSetChanged();
     }
 
     @Override
@@ -94,28 +97,10 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
         }
     }
 
-    public void setMoreLoading(boolean isMoreLoading) {
-        this.isMoreLoading=isMoreLoading;
-    }
 
     @Override
     public int getItemCount() {
         return itemList.size();
-    }
-
-    public void setProgressMore(final boolean isProgress) {
-        if (isProgress) {
-            new Handler().post(new Runnable() {
-                @Override
-                public void run() {
-                    itemList.add(null);
-                    notifyItemInserted(itemList.size() - 1);
-                    }
-                });
-        } else {
-            itemList.remove(itemList.size() - 1);
-            notifyItemRemoved(itemList.size());
-        }
     }
 
     static class StudentViewHolder extends RecyclerView.ViewHolder {
