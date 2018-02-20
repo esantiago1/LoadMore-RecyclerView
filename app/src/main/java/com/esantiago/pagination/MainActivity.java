@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoadMoreListener
-                ,SwipeRefreshLayout.OnRefreshListener{
+        , SwipeRefreshLayout.OnRefreshListener {
 
 
     private AdapterItem mAdapter;
@@ -31,8 +31,8 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
         setContentView(R.layout.activity_main);
 
         itemList = new ArrayList<>();
-        swipeRefresh=findViewById(R.id.swipeRefresh);
-        RecyclerView mRecyclerView =  findViewById(R.id.rvList);
+        swipeRefresh = findViewById(R.id.swipeRefresh);
+        RecyclerView mRecyclerView = findViewById(R.id.rvList);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new AdapterItem(this);
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 LinearLayoutManager llManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (llManager.findLastCompletelyVisibleItemPosition() == (mAdapter.getItemCount() - 4)) {
+                if (dy > 0 && llManager.findLastCompletelyVisibleItemPosition() == (mAdapter.getItemCount() - 2)) {
                     mAdapter.showLoading();
                 }
             }
@@ -55,13 +55,13 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d("MainActivity_","onStart");
+        Log.d("MainActivity_", "onStart");
         loadData();
     }
 
     @Override
     public void onRefresh() {
-        Log.d("MainActivity_","onRefresh");
+        Log.d("MainActivity_", "onRefresh");
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -69,18 +69,13 @@ public class MainActivity extends AppCompatActivity implements AdapterItem.OnLoa
                 loadData();
 
             }
-        },2000);
+        }, 2000);
     }
 
     @Override
     public void onLoadMore() {
-        new AsyncTask<Void,Void,List<Item>>(){
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                mAdapter.showLoading();
-            }
-
+        Log.d("MainActivity_", "onLoadMore");
+        new AsyncTask<Void, Void, List<Item>>() {
             @Override
             protected List<Item> doInBackground(Void... voids) {
                 /**

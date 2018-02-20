@@ -84,10 +84,6 @@ public class AdapterItem extends RecyclerView.Adapter<RecyclerView.ViewHolder>  
         notifyItemRangeChanged(sizeInit, itemList.size());
     }
 
-    public void clear(){
-        itemList.clear();
-        notifyDataSetChanged();
-    }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
